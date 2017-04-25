@@ -35,7 +35,7 @@ def load_data():
     # income distribution     
     income = parse_file('income.shares.csv')    
 
-    income.loc[2012,'0-50'] *= 0.1                      # likely typos in csv
+    income.loc[2012,'0-50'] *= 0.1                      # add zeros
     income['99+'][income['99+'] > 0.8] *= 0.1
 
     income['90-99'] = income['90-99'] - income['99+']   # WID data overlaps
