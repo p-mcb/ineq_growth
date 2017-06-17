@@ -10,47 +10,37 @@ def load_data():
     called below in make_animation()
     """
 
-    def parse_file(fname):
-        p90p100, p99p100, p0p50, p50p90 = {}, {}, {}, {}
+    # income distribution
+    p90p100, p99p100, p0p50, p50p90 = {}, {}, {}, {}
 
-        with open('income.shares.csv') as file:
-            for line in file:
-                pctl, year, share = line.rstrip('\n').split(';')
-                if pctl == 'p90p100': dd = p90p100
-                elif pctl == 'p99p100': dd = p99p100
-                elif pctl == 'p0p50': dd = p0p50
-                elif pctl == 'p50p90': dd = p50p90
-                else: continue
-                if share == '': share = np.nan
-                dd[int(year)] = float(share)
+    with open('income.shares.csv') as file:
+        for line in file:
+            pctl, year, share = line.rstrip('\n').split(';')
+            if pctl == 'p90p100': dd = p90p100
+            elif pctl == 'p99p100': dd = p99p100
+            elif pctl == 'p0p50': dd = p0p50
+            elif pctl == 'p50p90': dd = p50p90
+            else: continue
+            if share == '': share = np.nan
+            dd[int(year)] = float(share)
 
-        out = pd.DataFrame(
-                {'99+':p99p100, 
-                '90-99':p90p100,
-                '50-90':p50p90,
-                '0-50': p0p50} )
+    income = pd.DataFrame(
+        {'99+':p99p100, 
+        '90-99':p90p100,
+        '50-90':p50p90,
+        '0-50': p0p50} )
 
-        return out
-
-    # income distribution     
-    income = parse_file('income.shares.csv')    
-
-    income.loc[2012,'0-50'] *= 0.1                      # likely typos in csv
+    income.loc[2012,'0-50'] *= 0.1                      # add zeros
     income['99+'][income['99+'] > 0.8] *= 0.1
 
     income['90-99'] = income['90-99'] - income['99+']   # WID data overlaps
 
     for x in [1963, 1965]:                              # missing for 63 & 65
-        income.loc[x, '50-90'] = 1-np.nansum(income.loc[x,]) 
+        income.loc[x, '50-90'] = 1-np.nansum(income.loc[x,])
 
     # national income
-    gdp = []
     with open('income.csv') as file:
-        for line in file:
-            year, data = line.rstrip('\n').split(',')
-            gdp += [float(data)]
-
-    income['gdp'] = gdp
+        income['gdp'] = [float(line.rstrip('\n').split(',')[1]) for line in file]
 
     return income
 
@@ -83,8 +73,7 @@ def make_animation(fname = None):
         elif type == 2:                      # missing below 90
             data = [ income.loc[year,'99+'],
                         income.loc[year,'90-99'],
-                        1-(income.loc[year,'99+']+income.loc[year,'90-99']) 
-                   ]
+                        1-(income.loc[year,'99+']+income.loc[year,'90-99']) ]
             labs = ['99+', '90-99', '']
             col_list = ['b','g','w']
     
